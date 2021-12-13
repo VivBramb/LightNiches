@@ -143,6 +143,7 @@ ggplot(data = store_h_all, aes(x = datetime, y = light, col = hoboID, alpha = .1
 
 HS19a_subs <- store_h_all %>% filter(folder == "HS19a")
 RS19a_subs <- store_h_all %>% filter(folder == "RS19a")
+RS17a_subs <- store_h_all %>% filter(folder == "RS17a")
 HS18b_subs <- store_h_all %>% filter(folder == "HS18b")
 TB19a_subs <- store_h_all %>% filter(folder == "TB19a")
 ggplot(data = TB19a_subs, aes(x = datetime, y = light)) +
@@ -161,7 +162,7 @@ ggplot(data = HS19a_subs, aes(x = datetime, y = light, col = hoboID, alpha = .1)
   theme(legend.title = element_blank(), legend.position = "none")
 length(unique(HS19a_subs$hoboID))
 
-ggplot(data = RS19a_subs, aes(x = datetime, y = light, col = hoboID, alpha = .1)) +
+ggplot(data = RS17a_subs[RS17a_subs$hoboID == "RS37",], aes(x = datetime, y = light, col = hoboID, alpha = .1)) +
   geom_point(shape = 20)+
   geom_smooth()+
   theme_minimal()+
@@ -194,7 +195,7 @@ store_h_all %>%
 # H67 set wrong sampling frequence - it finishes before deployment is done
 
 store_h_all %>%
-  filter(folder == "RS19a") %>%
+  filter(folder == "RS17a") %>%
   distinct(hoboID)
 # H01 and H39 didn't start (still had 2018 data from last deplyment)
 # H33 set wrong sampling frequence- it finishes before deployment is done
@@ -204,6 +205,22 @@ store_h_all %>%
   distinct(hoboID)
 # J12 didn't start(still had 2018 data from last deplyment)
 # H51 has wrong day - didn't start.
+
+## I set the initial date/time of recording wrong when launching them. 
+## they are all from 2017 so I wouldn't be surprised...
+## take them out
+store_h_all <- as.data.frame(store_h_all%>%
+                               filter(hoboID != "TM25",
+                                      hoboID != "SE53",
+                                      hoboID != "HS41",
+                                      hoboID != "RS38",
+                                      hoboID != "RS40",
+                                      hoboID != "TB53",
+                                      hoboID != "RS27",
+                                      hoboID != "RS37",
+                                      hoboID != "TB29",
+                                      hoboID != "SE19")) 
+
 
 #### summarize readings for light  ####
 
@@ -265,16 +282,20 @@ light <- data.frame(light_b %>%
 
 tail(sort(light$integral_lux),10L)
 
-light[light$integral_lux>100000000,]
+length(unique(light$integral_lux[light$integral_lux>100000000]))
+unique(light$integral_lux[light$integral_lux>100000000])
+unique(light$folder[light$integral_lux>100000000])
+nrow(light)
+nrow(light[light$light>40000,])
 
 
-plot(light$integral_lux~light$integral_lux_5p, xlim = c(0,5000000), ylim = c(0,5000000))
-abline(lm(light$integral_lux~light$integral_lux_5p), col = "blue")
-abline(a = 0, b = 1)
-
-plot(light$integral_lux~light$integral_lux)
-
-plot(light$integral_lux~light$integral_lux_5p)
+L118a_subs <- store_h_all %>% filter(folder == "L118a")
+ggplot(data = L118a_subs, aes(x = datetime, y = light)) +
+  geom_point(shape = 20)+
+  geom_smooth(method = "loess")+
+  theme_minimal()+
+  theme(legend.title = element_blank(), legend.position = "none")+
+  facet_wrap(.~hoboID, scales = "free_x")
 
 summary(lm(light$integral_lux~light$integral_lux_3p))
 summary(lm(light$integral_lux~light$integral_lux_5p))
@@ -473,6 +494,7 @@ env <- merge(light, tides, by = "datetime_pos")
 env <- merge(env, par, by = "datetime_pos", all.x = TRUE)
 str(env)
 
+
 envclean <- env[,c(1,3:24,33,35)]
 colnames(envclean) <-  c("datetime_pos", "temp", "light_lux", "hoboID", "site",
                             "year", "rep", "unit", "folder", "light_mol", 
@@ -482,33 +504,12 @@ colnames(envclean) <-  c("datetime_pos", "temp", "light_lux", "hoboID", "site",
                             "integral_lux_3p", "integral_mol_5p","integral_lux_5p", 
                             "tide_cm", "surface_par" )
 summary(envclean)
-dim(envclean)
-env12hclean <-env12hclean[complete.cases(env12hclean$par),]
-env12hclean$diff_light <- (env12hclean$par - env12hclean$mol_light)
-env12hclean <- data.frame(env12hclean %>%
-                            group_by(folder,hoboID,unit) %>%
-                            mutate(diff_int = sum(diff_light)) )
 
-env12hclean <- as.data.frame(env12hclean %>%
-                               drop_na())
+write.csv(envclean, "output/env_long.csv", row.names=FALSE)
 
-colnames(env12hclean) <- c("datetime_pos", "temp", "light", "hoboID", 
-                           "site", "yr", "rep", "unit", "folder",
-                           "mol_light", "integral", "day", "time","tide", "par","diff_light", "diff_int")
-write.csv(env12hclean, paste0("D:/Dropbox/My Dropbox/NC-RR_environment_data/outputs/env12hclean2.csv"), row.names=FALSE)
+env_sum <- unique(envclean[,c("hoboID", "site",
+                              "year", "rep", "unit", "folder",
+                              "integral_mol", "integral_lux", "integral_mol_3p", 
+                              "integral_lux_3p", "integral_mol_5p","integral_lux_5p")])
 
-ggplot()+
-  geom_point(data = env12hclean, aes(datetime_pos,par))+
-  facet_wrap(.~yr, scales = "free_x")
-© 2021 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Docs
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
+write.csv(env_sum, "output/env_int.csv", row.names=FALSE)

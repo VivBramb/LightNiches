@@ -93,22 +93,6 @@ for (dim in dims) {
   df$light_pard[is.infinite(df$light_pard)] <- 0
   df$light_pard[is.na(df$light_pard)] <- 0
   
-  ## set the initial date/time of recording wrong when launching them. 
-  ## they are all from 2017 so I wouldn't be surprise.
-  # take them out
-  
-  df <- as.data.frame(df%>%
-                        filter(mergekey != "TM17H25",
-                               mergekey != "SE17H53",
-                               mergekey != "HS17H41",
-                               mergekey != "RS17H38",
-                               mergekey != "RS17H40",
-                               mergekey != "TB17H53",
-                               mergekey != "RS17H27",
-                               mergekey != "RS17H37",
-                               mergekey != "TB18H29",
-                               mergekey != "SE18H19")) 
-  
   # get integrals of par at the surface, 
   # par at the bottom,  mean tide height 
   # and water column at 12:00
