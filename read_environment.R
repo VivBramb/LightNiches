@@ -22,6 +22,13 @@ library("TideHarmonics")
 library("RColorBrewer")
 library(zoo)
 
+#### functions ####
+ld <- function(lux, depth) {
+  lux_log <- log(lux)
+  k <- 4/50
+  lux_log <- lux_log - depth * k
+  return(exp(lux_log))
+}
 
 ## load deployment dates for each sampling event for all the variable
 deployment <- read.csv("D:/Dropbox/My Dropbox/NC-RR_environment_data/environment/deployment_scheme.csv", h=T)
@@ -139,7 +146,7 @@ ggplot(data = store_h_all, aes(x = datetime, y = light, col = hoboID, alpha = .1
   theme(legend.title = element_blank(), legend.position = "none")+
   facet_wrap(.~folder, scales = "free_x")
 
-## individual datasets - sanity checks
+#### check individual datasets - sanity checks ####
 
 HS19a_subs <- store_h_all %>% filter(folder == "HS19a")
 RS19a_subs <- store_h_all %>% filter(folder == "RS19a")
@@ -206,6 +213,7 @@ store_h_all %>%
 # J12 didn't start(still had 2018 data from last deplyment)
 # H51 has wrong day - didn't start.
 
+#### filter out hobo handling  errors ####
 ## I set the initial date/time of recording wrong when launching them. 
 ## they are all from 2017 so I wouldn't be surprised...
 ## take them out
@@ -251,8 +259,8 @@ unique(light$datetime)
 
 light_b <- as.data.frame (light %>%
   #dplyr::arrange(site,datetime) %>%  #arrange() orders the rows of a data frame by the values of selected columns
-  dplyr::group_by(folder) %>% #group_by() takes an existing tbl and converts it into a grouped tbl where operations are performed "by group"
-  dplyr::mutate(light_mol_3p = zoo::rollmean(mol_light, k = 3, fill = 0),
+  group_by(folder) %>% #group_by() takes an existing tbl and converts it into a grouped tbl where operations are performed "by group"
+  mutate(light_mol_3p = zoo::rollmean(mol_light, k = 3, fill = 0),
                 light_mol_5p = zoo::rollmean(mol_light, k =5, fill = 0),
                 light_3p = zoo::rollmean(light, k = 3, fill = 0),
                 light_5p = zoo::rollmean(light, k =5, fill = 0)))
@@ -289,15 +297,18 @@ nrow(light)
 nrow(light[light$light>40000,])
 
 
-L118a_subs <- store_h_all %>% filter(folder == "L118a")
-ggplot(data = L118a_subs, aes(x = datetime, y = light)) +
-  geom_point(shape = 20)+
-  geom_smooth(method = "loess")+
+L118a_subs <- light_b %>% filter(folder == "L118a")
+names(L118a_subs)
+ggplot(data = L118a_subs, aes(x = datetime, y = light_mol_5p)) +
+  geom_line()+
+  #geom_smooth(method = "loess")+
   theme_minimal()+
   theme(legend.title = element_blank(), legend.position = "none")+
   facet_wrap(.~hoboID, scales = "free_x")
 
 summary(lm(light$integral_lux~light$integral_lux_3p))
+plot(light$integral_lux~light$integral_lux_3p)
+plot(light$integral_lux~light$integral_lux_5p)
 summary(lm(light$integral_lux~light$integral_lux_5p))
 
 #### read PAR ####
@@ -493,7 +504,7 @@ colnames(light)[2] <- "datetime_pos"
 env <- merge(light, tides, by = "datetime_pos")
 env <- merge(env, par, by = "datetime_pos", all.x = TRUE)
 str(env)
-
+dim(env)
 
 envclean <- env[,c(1,3:24,33,35)]
 colnames(envclean) <-  c("datetime_pos", "temp", "light_lux", "hoboID", "site",
@@ -513,3 +524,10 @@ env_sum <- unique(envclean[,c("hoboID", "site",
                               "integral_lux_3p", "integral_mol_5p","integral_lux_5p")])
 
 write.csv(env_sum, "output/env_int.csv", row.names=FALSE)
+
+
+
+
+
+
+
