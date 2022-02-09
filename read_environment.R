@@ -527,7 +527,16 @@ write.csv(env_sum, "output/env_int.csv", row.names=FALSE)
 
 
 
+#####fig for ppt ######
+L118a_subs <- envclean %>% filter(folder == "L118a", hoboID == "H35" |hoboID == "H45" )
 
-
+ggplot(data = L118a_subs) +
+  geom_line(aes(x = datetime_pos, y = light_mol), col = "grey80")+
+  geom_line(aes(x = datetime_pos, y = surface_par), col = "red")+
+  geom_line(aes(x = datetime_pos, y = light_mol_5p), col = "black")+
+  #geom_smooth(method = "loess")+
+  theme_minimal()+
+  theme(legend.title = element_blank(), legend.position = "none")+
+  facet_wrap(.~hoboID,nrow = 2, scales = "free_x")
 
 

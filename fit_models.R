@@ -7,7 +7,7 @@ library(ggplot2)
 library(tidyverse)
 library(viridis)
 library(mgcv)
-
+library(lme4)
 
 #### functions ####
 ld <- function(par, depth) {
@@ -15,7 +15,21 @@ ld <- function(par, depth) {
   k <- 4/50
   par_log <- par_log - depth * k
   return(exp(par_log))
-  }
+}
+
+ld1 <- function(par, depth) {
+  par_log <- log(par)
+  k <- 40/50
+  par_log <- par_log - depth * k
+  return(exp(par_log))
+}
+
+ld2 <- function(par, depth) {
+  par_log <- log(par)
+  k <- 4/500
+  par_log <- par_log - depth * k
+  return(exp(par_log))
+}
 
 #### read environmental data ####
 
@@ -31,30 +45,19 @@ env <- as.data.frame(env %>%
 dim(env)
 ##### fit light ######
 
-dims <- c(0.25,0.5,0.75)
-# dims <- 0.5
 # initialize storing lists and dfs
 
 df_int_tot <- data.frame() 
+df_tot <- data.frame()
 gam_list<-list()
+
+geom_all <- read.csv(paste0("output/geom_new.csv"), h = T)
+dims <- unique(geom_all$L)
+
 for (dim in dims) {
-  
-  geom <- read.csv(paste0("D:/Dropbox/My Dropbox/NC-RR_environment_data/outputs_medium old/geometric_traits_", dim, "cut.csv"), h = T)
-  geomT <- read.csv(paste0("D:/Dropbox/My Dropbox/NC-RR_environment_data/outputs_medium old/geometric_traits_", dim, "_uncut.csv"), h = T)
-  
-  geom2 <- read.csv(paste0("D:/Dropbox/My Dropbox/NC-RR_environment_data/outputs_medium old/geometric_traits_", dim, "_TBSE18_cut.csv"), h = T)
-  geom2T <- read.csv(paste0("D:/Dropbox/My Dropbox/NC-RR_environment_data/outputs_medium old/geometric_traits_", dim, "_TBSE18uncut.csv"), h = T)
-  
-  geom <- rbind(geom,geom2)
-  geomT <- rbind(geomT,geom2T)
+
+  geom <- geom_all[geom_all$L == dim,]
   geom$mergekey <- paste0(geom$rec, geom$year, geom$new_unit) #unique ID for hobo deployment
-  geom$Du <- geomT$D
-  geom$Ru <- geomT$R
-  geom$Hu <- geomT$hr
-  geom$Cu <- geomT$C
-  geom$au <- geomT$a
-  geom$bu <- geomT$b
-  ## merge datasets
   df <- merge(env,geom, by = "mergekey")
   
   # str(df)
@@ -73,93 +76,178 @@ for (dim in dims) {
   df$light_pard <- 0
   df$light_pard[df$pard !=0] <- df$light_mol_5p[df$pard !=0]/df$pard[df$pard !=0]
   summary(df$light_pard)
+  
+  
+  df$pard1[df$surface_par !=0] <- ld1(df$surface_par[df$surface_par !=0], df$water_col[df$surface_par !=0])
+  df$pard1 [df$surface_par ==0] <- 0
+  #summary(df$pard)
+  df$light_pard1 <- 0
+  df$light_pard1[df$pard1 !=0] <- df$light_mol_5p[df$pard1 !=0]/df$pard1[df$pard1 !=0]
+  summary(df$light_pard1)
+  
+  
+  df$pard2[df$surface_par !=0] <- ld2(df$surface_par[df$surface_par !=0], df$water_col[df$surface_par !=0])
+  df$pard2 [df$surface_par ==0] <- 0
+  #summary(df$pard)
+  df$light_pard2 <- 0
+  df$light_pard2[df$pard2 !=0] <- df$light_mol_5p[df$pard2 !=0]/df$pard2[df$pard2 !=0]
+  summary(df$light_pard2)
+  
+  
 
   df_long <- as.data.frame(df %>%
                         group_by(mergekey,lat,lon) %>%
                           filter(rep == "a") %>%
-                        mutate(integral_ld = sum(light_pard),
+                        mutate(integral_props = sum(light_pard),
                                integral_pard = sum(pard),
-                               par_integral = sum(surface_par)))
+                               integral_props1 = sum(light_pard1),
+                               integral_pard1 = sum(pard1),
+                               integral_props2 = sum(light_pard2),
+                               integral_pard2 = sum(pard2),
+                               bottom_integral = sum(light_mol_5p)))
+  df_long$prop_integrals = df_long$bottom_integral/df_long$integral_pard
+  df_long$prop_integrals1 = df_long$bottom_integral/df_long$integral_pard1
+  df_long$prop_integrals2 = df_long$bottom_integral/df_long$integral_pard2
   
+  df_tot <- rbind(df_long,df_tot)
 # get n
-  df_int <- unique(df_long[,c("integral_ld","integral_pard", "hr", "site","year.x",
-                         "integral_mol","integral_lux","integral_mol_3p","integral_lux_3p", 
-                         "integral_mol_5p", "integral_lux_5p", "par_integral","folder", 
-                         "D",  "Du", "R","dp","Ru", "Hu", "C","lon","lat",
-                         "hoboID", "a","b","mergekey", "Cu","au","bu")])
-  length(unique(df$mergekey)) # 903//936!
-  length(unique(df_int$mergekey)) # 903
-  dim(df_int) # 905  25
-  sum(duplicated(df_int$mergekey)) # there are 2 duplicates: two same IDs in the same record
-  df_int[duplicated(df_int$mergekey),]
-  df_int[524:527,] #RS17H44
-  df_int[409:412,] # N317H34
+  df_int <- unique(df_long[,c("integral_props","prop_integrals",
+                              "integral_props1","prop_integrals1",
+                              "integral_props2","prop_integrals2",
+                              "H","site","year.x",
+                         "integral_pard","integral_mol_5p", "folder",
+                         "Dclip",  "Dplane", "Rclip","dpHB","Rclip", 
+                         "Rplane","lon","lat",
+                         "hoboID", "mergekey","L")])
   
-  #leave one out for now and then go to the shp and the paper location annotation
+  # plot(data = df_int, integral_props~prop_integrals)
+  # length(unique(df$mergekey))
+  # length(unique(df_int$mergekey))
+  # dim(df_int)
+  # sum(duplicated(df_int$mergekey)) # there are 2 duplicates: two same IDs in the same record
+  # df_int[duplicated(df_int$mergekey),]
+  # df_int[841:915,]
+  # df_int[524:527,] #RS17H44
+  # df_int[409:412,] # N317H34
+  # 
+  # leave one out for now and then go to the shp and the paper location annotation
   df_int <- df_int[!duplicated(df_int$mergekey),]
-  
-  dim(df_int) # 903 26
+  df_int <- df_int[df_int$folder != "RS19a",]
+  dim(df_int) 
+  #removeNAs
+  df_int <- df_int[!is.na(df_int$Rclip)& !is.na(df_int$Rplane),]
   
   # scale values and set factors
   # tide is in cm, so divide it to get m
   
   df_int$year <- as.factor(df_int$year)
-  df_int$Rl <- as.numeric(log10(df_int$R))
-  df_int$Hl <- as.numeric(log10(df_int$hr))
-  df_int$aa <- abs(df_int$a)
-  df_int$Rul <- log(df_int$Ru)
-  df_int$Hul <- log(df_int$Hu)
+  df_int$Rcl <- as.numeric(log10(df_int$Rclip))
+  df_int$Rpl <- as.numeric(log10(df_int$Rplane))
+  df_int$Hl <- as.numeric(log10(df_int$H))
   df_int$dim <- dim
-  
-  ## get D_ theory ##
-  df_int$Dt <- 3 - log10(df_int$Hu / (sqrt(2) * (dim/32) * sqrt((df_int$Ru)^2 - 1))) / log10(dim /(dim/32))
-  
-  ## store_df ##
   df_int$rec<- as.factor(df_int$site)
+  df_int_tot <- rbind(df_int_tot, df_int)
   
-  slc1 <- gam(integral_ld~s(Dt,Rl)+ s(lon, lat, bs = "gp", m=2),
+  ss <- gamm(prop_integrals~s(Dclip,Rcl)+ s(lon, lat, bs = "gp", m=2), family = "binomial",
               data = df_int, method="REML")
-  slc2 <- gam(integral_ld~Dt*Rl+ s(lon, lat, bs = "gp", m=2),
+  ls <- gamm(prop_integrals~Dclip*Rcl+ s(lon, lat, bs = "gp", m=2), family = "binomial",
+              data = df_int, method="REML")
+  sl <- gamm(prop_integrals~s(Dclip,Rcl), random = list(rec=~1), family = "binomial",
+               data = df_int, method="REML")
+  ll <- gamm(prop_integrals~Dclip*Rcl, random = list(rec=~1), family = "binomial",
               data = df_int, method="REML")
   
-  lab <-paste0("slc1",dim)
-  gam_list[[lab]] <- slc1
-  #summary(slc1)
-  #png(paste0("D:/Dropbox/LightNiches/output/gamViz ",lab, ".png"))
-  plot(slc1, residuals = TRUE, pages = 1, 
-       pch = 19, cex = .5, shade = TRUE, seWithMean = TRUE)
-  #dev.off()
-  lab <-paste0("slc2",dim)
-  gam_list[[lab]] <- slc2
-  summary(slc2)
-  
-  df_int_tot<- df_long
-  vis.gam(slc1, view=c("Dt", "Rl"), type="response", plot.type="contour", main = "GAM / s(D,R)",
-          color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
-  points(df_int$Rl~df_int$Dt, pch = 19, cex = .6, 
-         col = rgb(red=0, green=0, blue=0, alpha=0.3))
-  
-  summary(slc1)
-  vis.gam(slc2, view=c("Dt", "Rl"), type="response", plot.type="contour", main = "LM / D*R",
-          color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
-  points(df_int$Rl~df_int$Dt, pch = 19, cex = .6, 
-         col = rgb(red=0, green=0, blue=0, alpha=0.3))
-  summary(slc2)
+  lab <-paste0("ss",dim)
+  gam_list[[lab]] <- ss
+  lab <-paste0("ls",dim)
+  gam_list[[lab]] <- ls
+  lab <-paste0("sl",dim)
+  gam_list[[lab]] <- sl
+  lab <-paste0("ll",dim)
+  gam_list[[lab]] <- ll
+
 }
 
 
-###########
+par(mfrow=c(1,3))
+vis.gam(gam_list["ss0.25"]$ss0.25$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "GAM25 / s(D,R) + s(lon,lat)",
+  color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.25,]$Rcl~df_int_tot[df_int_tot$L == 0.25,]$Dclip, pch = 19, cex = .6,
+  col = rgb(red=0, green=0, blue=0, alpha=0.7))
+
+vis.gam(gam_list["ss0.5"]$ss0.5$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "GAM50 / s(D,R) + s(lon,lat)",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.5,]$Rcl~df_int_tot[df_int_tot$L == 0.5,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.3))
+
+vis.gam(gam_list["ss0.75"]$ss0.75$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "GAM75 / s(D,R) + s(lon,lat)",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.75,]$Rcl~df_int_tot[df_int_tot$L == 0.75,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.7))
+
+
+vis.gam(gam_list["ls0.25"]$ls0.25$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "LM/GAM25 / D*R  + s(lon,lat)",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.25,]$Rcl~df_int_tot[df_int_tot$L == 0.25,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.3))
+
+vis.gam(gam_list["ls0.5"]$ls0.5$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "LM/GAM50 /  D*R  + s(lon,lat)",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.5,]$Rcl~df_int_tot[df_int_tot$L == 0.5,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.3))
+
+vis.gam(gam_list["ls0.75"]$ls0.75$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "LM/GAM75 /  D*R + s(lon,lat)",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.75,]$Rcl~df_int_tot[df_int_tot$L == 0.75,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.3))
+
+
+
+vis.gam(gam_list["sl0.25"]$sl0.25$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "GAM/LM25 /s(D,R) + 1|site",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.25,]$Rcl~df_int_tot[df_int_tot$L == 0.25,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.3))
+
+vis.gam(gam_list["sl0.5"]$sl0.5$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "GAM/LM50 /  s(D,R) + 1|site",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.5,]$Rcl~df_int_tot[df_int_tot$L == 0.5,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.3))
+
+vis.gam(gam_list["sl0.75"]$sl0.75$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "LM/GAM75 /  s(D,R)  + 1|site",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.75,]$Rcl~df_int_tot[df_int_tot$L == 0.75,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.3))
+
+
+
+vis.gam(gam_list["ll0.25"]$ll0.25$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "LM25 / D*R + 1|site",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.25,]$Rcl~df_int_tot[df_int_tot$L == 0.25,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.3))
+
+vis.gam(gam_list["ll0.5"]$ll0.5$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main =  "LM50 / D*R + 1|site",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.5,]$Rcl~df_int_tot[df_int_tot$L == 0.5,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.3))
+
+vis.gam(gam_list["ll0.75"]$ll0.75$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main =  "LM75 / D*R + 1|site",
+        color = "gray", ylab = expression(paste("log(R "[dim], ")")), xlab = expression(paste("D"[50])))
+points(df_int_tot[df_int_tot$L == 0.75,]$Rcl~df_int_tot[df_int_tot$L == 0.75,]$Dclip, pch = 19, cex = .6,
+       col = rgb(red=0, green=0, blue=0, alpha=0.3))
+
+
+1###########
 source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/fb53bd97121f7f9ce947837ef1a4c65a73bffb3f/geom_flat_violin.R")
 
-ylab.light = expression(paste("light integral, μMol/mm"^"    2"))
+ylab.light = expression(paste("Proportion of the integrals"))
 df_intALL <- df_int
 df_intALL$folder = "zall"
 df_intALL$rec = "zall"
 df_int2 <- rbind(cbind(df_intALL, rec2 = df_int$rec),cbind(df_int, rec2 = df_int$rec))
 
-gl <- ggplot(data = df_int2[df_int2$integral_ld <300,], 
-             aes(x = folder, y = integral_ld, fill = rec)) +
-  geom_point(aes(y = integral_ld, color = rec2),
+gl <- ggplot(data = df_int2, 
+             aes(x = folder, y = prop_integrals, fill = rec)) +
+  geom_point(aes(y = prop_integrals, color = rec2),
              position = position_jitter(width = .15), alpha = 0.6, size = 1) +
   geom_flat_violin(position = position_nudge(x = .2, y = 0), scale = "width") +
   expand_limits(x = 1) +
@@ -246,3 +334,63 @@ points(df_int_tot[df_int_tot$dim == 0.5,]$Rl~df_int_tot[df_int_tot$dim == 0.5,]$
 
 plot(int_scaled ~ Rl, df_int[df_int$int_scaled < 10000,])
 plot(int_scaled ~ log(Ru), df_int[df_int$int_scaled < 10000,])
+
+dim(df)
+
+######
+
+df_tot %>% 
+  filter(folder == "GT17a" ) %>%
+  ggplot() +
+  geom_line(aes(x = datetime_pos, y = light_mol), col = "grey80")+
+  geom_line(aes(x = datetime_pos, y = surface_par), col = "red")+
+  geom_line(aes(x = datetime_pos, y = light_mol_5p), col = "black")+
+  #geom_smooth(method = "loess")+
+  theme_minimal()+
+  theme(legend.title = element_blank(), legend.position = "none")+
+  facet_wrap(.~hoboID,nrow = 4, scales = "free_x")
+
+df_tot %>% 
+  filter(folder == "GT19a" ) %>%
+  ggplot() +
+  geom_line(aes(x = datetime_pos, y = light_mol), col = "grey80")+
+  geom_line(aes(x = datetime_pos, y = surface_par), col = "red")+
+  geom_line(aes(x = datetime_pos, y = light_mol_5p), col = "black")+
+  #geom_smooth(method = "loess")+
+  theme_minimal()+
+  theme(legend.title = element_blank(), legend.position = "none")+
+  facet_wrap(.~hoboID,nrow = 4, scales = "free_x")
+
+example <- as.data.frame(df_tot %>%
+                           filter((folder == "GT17a" & hoboID == "GT03")| (folder == "GT19a"& hoboID == "H02")))
+example%>%
+  ggplot() +
+  geom_line(aes(x = datetime_pos, y = light_mol), col = "grey80")+
+  geom_line(aes(x = datetime_pos, y = surface_par), col = "red")+
+  geom_line(aes(x = datetime_pos, y = light_mol_5p), col = "black")+
+  #geom_smooth(method = "loess")+
+  theme_minimal()+
+  theme(legend.title = element_blank(), legend.position = "none")+
+  facet_wrap(.~hoboID,nrow = 4, scales = "free_x")
+
+example%>%
+  ggplot() +
+  geom_line(aes(x = datetime_pos, y = light_mol), col = "grey80")+
+  geom_line(aes(x = datetime_pos, y = surface_par), alpha = .2, col = "red")+
+  geom_line(aes(x = datetime_pos, y = pard), col = "red")+
+  geom_line(aes(x = datetime_pos, y = light_mol_5p), col = "black")+
+  #geom_smooth(method = "loess")+
+  theme_minimal()+
+  theme(legend.title = element_blank(), legend.position = "none")+
+  facet_wrap(.~hoboID,nrow = 4, scales = "free_x")
+
+df_tot %>% 
+  filter(folder == "GT17a" ) %>%
+  ggplot() +
+  ylim(0,2000)+
+  geom_line(aes(x = datetime_pos, y = surface_par), col = "red")+
+  geom_point(aes(x = datetime_pos, y = light_mol_5p), alpha = .3, col = "grey70")+
+  geom_point(aes(x = datetime_pos, y = pard2), alpha = .3, col = "black")+
+  #geom_smooth(method = "loess")+
+  theme_minimal()+
+  theme(legend.title = element_blank(), legend.position = "none")
