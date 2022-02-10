@@ -394,3 +394,46 @@ df_tot %>%
   #geom_smooth(method = "loess")+
   theme_minimal()+
   theme(legend.title = element_blank(), legend.position = "none")
+
+#######
+
+library(GGally)
+for (dim in dims) {}
+data <- df_int_tot[df_int_tot$L==dim,c("prop_integrals","integral_mol_5p", "H", "Rcl", "Dclip", "dpHB",
+                  "year","site")]
+data$H<- log(data$H)
+colnames(data) <- c("prop of\nintegrals", "bottom\nintegrals", "log(Height\nrange)", "log(Rugosity)",
+                      "Fractal\n dimension", "HOBO\ndepth","year","site")
+ggcorr(data, palette = "RdYlGn", name = "rho", 
+       label = FALSE, label_color = "black")
+columns <- 1:ncol(data)
+pairs <- ggpairs(data, title = "",
+                   axisLabels = "show", 
+                   columnLabels = colnames(data[, columns])) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+pairs
+
+
+data <- df_int_tot[df_int_tot$L==dim,c("prop_integrals","integral_mol_5p", "H", "Rcl", "Dclip", "dpHB",
+                                       "year","site")]
+colnames(data) <- c("prop of\nintegrals", "bottom\nintegrals", "Height\nrange", "Rugosity",
+                    "Fractal\n dimension", "HOBO\ndepth","year","site")
+ggcorr(data, palette = "RdYlGn", name = "rho", 
+       label = FALSE, label_color = "black")
+columns <- 1:ncol(data)
+pairs <- ggpairs(data, title = "",
+                 axisLabels = "show", 
+                 columnLabels = colnames(data[, columns])) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+pairs
+
+
+
+png("D:/Dropbox/My Dropbox/NC-RR_environment_data/outputs_fit4/pairs 50.png", res = 300,
+    width = 30, height = 20, units = "cm")
+print(pairs50)
+dev.off()
+
+
+
+
