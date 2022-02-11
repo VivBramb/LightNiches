@@ -8,6 +8,8 @@ library(tidyverse)
 library(viridis)
 library(mgcv)
 library(lme4)
+library(hms)
+library(lubridate)
 
 #### functions ####
 ld <- function(par, depth) {
@@ -34,6 +36,7 @@ ld2 <- function(par, depth) {
 #### read environmental data ####
 
 env <-  read.csv("D:/Dropbox/LightNiches/output/env_long.csv", h=T)
+#env<- env[env$folder != "RS19a",]
 env$mergekey <- paste0(env$site,env$year,env$unit) # create unique ID for each HB
 str(env)
 dim(env)
@@ -43,6 +46,14 @@ env$minute <- minute(env$time2)
 env <- as.data.frame(env %>%
                        filter(minute %in% seq(0,55,5)))
 dim(env)
+
+## all sampling have same n?
+env_check <- env %>%
+  group_by(folder) %>%
+  mutate(n_distinct(datetime_pos))
+unique(env_check$`n_distinct(datetime_pos)`)
+# yes!
+  
 ##### fit light ######
 
 # initialize storing lists and dfs
@@ -132,7 +143,6 @@ for (dim in dims) {
   # 
   # leave one out for now and then go to the shp and the paper location annotation
   df_int <- df_int[!duplicated(df_int$mergekey),]
-  df_int <- df_int[df_int$folder != "RS19a",]
   dim(df_int) 
   #removeNAs
   df_int <- df_int[!is.na(df_int$Rclip)& !is.na(df_int$Rplane),]
@@ -168,6 +178,7 @@ for (dim in dims) {
 
 }
 
+# plot interaction
 
 par(mfrow=c(1,3))
 vis.gam(gam_list["ss0.25"]$ss0.25$gam,view=c("Dclip", "Rcl"), type="response", plot.type="contour", main = "GAM25 / s(D,R) + s(lon,lat)",
@@ -236,7 +247,8 @@ points(df_int_tot[df_int_tot$L == 0.75,]$Rcl~df_int_tot[df_int_tot$L == 0.75,]$D
        col = rgb(red=0, green=0, blue=0, alpha=0.3))
 
 
-1###########
+###### vioplot of the response ######
+
 source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/fb53bd97121f7f9ce947837ef1a4c65a73bffb3f/geom_flat_violin.R")
 
 ylab.light = expression(paste("Proportion of the integrals"))
@@ -337,7 +349,7 @@ plot(int_scaled ~ log(Ru), df_int[df_int$int_scaled < 10000,])
 
 dim(df)
 
-######
+###### ignore for now but keeping it to update according to new fit ######
 
 df_tot %>% 
   filter(folder == "GT17a" ) %>%
@@ -395,7 +407,7 @@ df_tot %>%
   theme_minimal()+
   theme(legend.title = element_blank(), legend.position = "none")
 
-#######
+#####  pair plot #####
 
 library(GGally)
 for (dim in dims) {}
@@ -429,10 +441,10 @@ pairs
 
 
 
-png("D:/Dropbox/My Dropbox/NC-RR_environment_data/outputs_fit4/pairs 50.png", res = 300,
-    width = 30, height = 20, units = "cm")
+# png("D:/Dropbox/My Dropbox/NC-RR_environment_data/outputs_fit4/pairs 50.png", res = 300,
+#     width = 30, height = 20, units = "cm")
 print(pairs50)
-dev.off()
+# dev.off()
 
 
 

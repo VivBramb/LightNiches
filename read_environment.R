@@ -515,6 +515,7 @@ colnames(envclean) <-  c("datetime_pos", "temp", "light_lux", "hoboID", "site",
                             "integral_lux_3p", "integral_mol_5p","integral_lux_5p", 
                             "tide_cm", "surface_par" )
 summary(envclean)
+envclean<- envclean[envclean$folder != "RS19a",]
 
 write.csv(envclean, "output/env_long.csv", row.names=FALSE)
 
