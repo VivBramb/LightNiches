@@ -1,5 +1,5 @@
 # Light Niches in Lizard Island
-Data and code used for analysis light niches in Lizard. (why?!?!)
+Data and code used for analysis of light niches in Lizard
 
 ## File descriptions
 ### Data
@@ -17,4 +17,4 @@ Empty as raw data (DEMs and 900+hobo readings) were too heavy. See outputs for v
 - **geometry.R**: get complexity variables (new Rclipped, 3 scales) 
 - **fit_models.R**: handle data to make tables for model fitting
 - **play.R**:bits of code for quick graphs and checks I used throughout the analysis. Very random...
-- **Fit_4.R**: code from the previous version of the analysis - ignore now
+
