@@ -2,8 +2,8 @@
 Data and code used for analysis of light niches in Lizard Island.
 
 ## File descriptions
-### Data
-Empty as raw data (DEMs and 903 hobo readings) were too heavy. But outputs contain aggregated environmental data and geometrical variables extracted values extracted from DEMs (env and geom) with the R scripts provided
+### data
+Empty as raw data (DEMs and 903 hobo readings) were too heavy. Output contains aggregated environmental data and geometrical variables extracted from DEMs with the R scripts provided. For access to raw data, please contact me.
 
 ### output
 - **env_int.csv**: light readings and environmental data (PAR and tide) summarized per unit
