@@ -5,6 +5,11 @@ source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/f
 library(ggplot2)
 library(dplyr)
 library(viridis) 
+<<<<<<< HEAD
+library(cowplot)
+
+=======
+>>>>>>> 51882d098524d441ee5ac04e0e60cd66ae4dfce0
 
 ## figure 1 ####
 
@@ -73,10 +78,17 @@ dev.off()
 #### fig 2 #####
 
 df_int <- as.data.frame(df_int %>% group_by(site) %>% 
+<<<<<<< HEAD
+                          mutate(Rm = mean(Rmean), Rr = rank(Rm), Rl_0.5 = log10(R_0.5)) %>% ungroup())
+
+gl <- ggplot(data = df_int, 
+             aes(x = reorder(site, Rm_log), y = prop_integrals, fill = site)) +
+=======
                           mutate(Rm = mean(Rl_0.5), Rr = rank(Rm)) %>% ungroup())
 
 gl <- ggplot(data = df_int, 
              aes(x = reorder(site, Rm), y = prop_integrals, fill = site)) +
+>>>>>>> 51882d098524d441ee5ac04e0e60cd66ae4dfce0
   geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .9) +
   geom_point(aes(y = prop_integrals, color = site), 
              position = position_jitter(width = .15), size = 1, alpha = 0.7) +
@@ -90,18 +102,157 @@ gl <- ggplot(data = df_int,
   theme(panel.border = element_blank(),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank(),
+<<<<<<< HEAD
+        text = element_text(size = 11),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12))
+
+ggplot(data = df_int, 
+       aes(x = reorder(site, Rm_log), y = prop_integrals, fill = site)) +
+  geom_flat_violin(position = position_nudge(x = .2), alpha = .9) +
+  geom_point(aes(color = site),
+             position = position_jitter(width = .15),
+             size = 1, alpha = 0.7) +
+  geom_flat_violin(
+    data = df_int,
+    aes(x = length(unique(df_int$site)) + 1,
+        y = prop_integrals),
+    inherit.aes = FALSE,
+    fill = "black",
+    color = "black",
+    alpha = 1,
+    width = 0.8
+  ) +
+  expand_limits(x = length(unique(df_int$site)) + 1) +
+  scale_color_viridis("site", labels = unique(df_int$site), discrete = TRUE) +
+  scale_fill_viridis("site", labels = unique(df_int$site), discrete = TRUE) +
+  theme_bw() +
+  labs(x ="site", y = "proportion of light \n available at substratum") +
+  theme(panel.border = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        text = element_text(size = 11),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12))
+
+
+
+=======
         text = element_text(size = 15),
         axis.title.x = element_text(size = 16),
         axis.title.y = element_text(size = 16),
         legend.title = element_text(size = 16),
         legend.text = element_text(size = 16))
+>>>>>>> 51882d098524d441ee5ac04e0e60cd66ae4dfce0
 gl
 ggsave("~/Dropbox/LightNiches/output/lightreadings_ordered.png",
        width = 5, height = 4, dpi = 150, units = "in", device='png')
 
+<<<<<<< HEAD
+#review 
+df_fig <- rbind(df_int, df_int)
+df_fig$site[1:903] <- "all"
+df_fig$Rm[1:903] <- 5
+
+f2a <- ggplot(data = df_fig, 
+       aes(x = reorder(site, Rm_log), y = prop_integrals, fill = site)) +
+  geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .9) +
+  geom_point(aes(y = prop_integrals, color = site), 
+             position = position_jitter(width = .15), size = 1, alpha = 0.4) +
+  #coord_flip() + # flip or not?
+  scale_color_viridis("site",labels = unique(df_fig$site), discrete = TRUE) +
+  scale_fill_viridis("site",labels = unique(df_fig$site), discrete = TRUE) +
+  #labs(tag = "a")+
+  theme_bw() +
+  labs(x ="site", y = "proportion of light \n available at substratum")+
+  theme(panel.border = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        text = element_text(size = 11),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12))
+
+f2a <- ggplot(data = df_fig, 
+              aes(x = reorder(site, Rm_log), y = prop_integrals, fill = site)) +
+  geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .9) +
+  geom_point(aes(y = prop_integrals), 
+             position = position_jitter(width = .15), size = 0.8, alpha = 0.4) +
+  #coord_flip() + # flip or not?
+  scale_color_viridis("site",labels = unique(df_fig$site), discrete = TRUE) +
+  scale_fill_viridis("site",labels = unique(df_fig$site), discrete = TRUE) +
+  #labs(tag = "a")+
+  theme_bw() +
+  labs(x ="site", y = "proportion of light \n available at substratum")+
+  theme(panel.border = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        text = element_text(size = 11),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        legend.key = element_blank()
+        )
+f2a
+
+f2a <- ggplot(data = df_int, 
+              aes(x = reorder(site, Rm_log), y = prop_integrals)) +
+  geom_flat_violin(
+    position = position_nudge(x = .2),
+    fill = "grey80",
+    color = NA,
+    alpha = .9
+  ) +
+  geom_point(position = position_jitter(width = .15),
+             size = 0.8, alpha = 0.4) +
+  geom_flat_violin(
+    data = df_int,
+    aes(x = length(unique(df_int$site)) + 2,
+        y = prop_integrals),
+    inherit.aes = FALSE,
+    fill = "grey30",
+    color = NA,
+    width = 0.8
+  ) +
+  expand_limits(x = length(unique(df_int$site)) + 2) +
+  scale_x_discrete(
+    limits = c(levels(reorder(df_int$site, df_int$Rm)),"",  "all sites")
+  ) +
+  theme_bw() +
+  labs(x ="site                                 ",
+       y = "proportion of light \n available at substratum\n") +
+  theme(panel.border = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        text = element_text(size = 12),
+        axis.title.x = element_text(size = 13),
+        axis.ticks.x=element_blank(),
+        axis.title.y = element_text(size = 13),
+        legend.position = "none")   # remove legend since colors no longer map
+
+
+
+
+f2a
+ggsave("~/Dropbox/LightNiches/output/Fig2a_reviewed.png",
+       width = 18, height = 10, dpi = 150, units = "cm", device='png', bg = "white")
+
+
+## Fig 2b ##
+
+ggplot(data = df_int) + 
+  geom_point( aes(Rl_0.5,H_0.5, color = site), size = 2, alpha = 0.5) +
+=======
 
 ggplot(data = df_int) + 
   geom_point( aes(Rl_0.5,H_0.5, color = site), size = 3, alpha = 0.5) +
+>>>>>>> 51882d098524d441ee5ac04e0e60cd66ae4dfce0
   ylab("height range, m (H)") +
   xlab(expression("log"[10]*"(surface rugosity), dimensionless (R_log)")) +
   #guides(fill = guide_legend(order = 0.1))+
@@ -119,8 +270,57 @@ ggplot(data = df_int) +
         legend.title = element_text(size = 16),
         legend.text = element_text(size = 16))
 
+<<<<<<< HEAD
+# review
+f2b <- ggplot(data = df_int) + 
+  geom_point(aes(Rl_0.5, H_0.5,
+                 color = prop_integrals,
+                 size  = prop_integrals),
+             alpha = 0.25) +
+  ylab("height range, m (H)") +
+  xlab(expression("log"[10]*"(surface rugosity), dimensionless (R_log)")) +
+  scale_color_viridis_c(name = " proportion \n of light \n available \n at substratum",
+                        option = "mako") +
+  scale_size(name = " proportion \n of light \n available \n at substratum") +
+  guides(color = guide_legend(),
+         size  = guide_legend()) +
+  theme_bw()+ 
+  theme(panel.border = element_blank(),
+        panel.background = element_rect(fill = "white", colour = "black"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        text = element_text(size = 12),
+        axis.title.x = element_text(size = 13),
+        axis.title.y = element_text(size = 13),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        legend.key = element_blank())
+f2b
+ggsave("~/Dropbox/LightNiches/output/fig2b_reviewed.png",
+       width = 15, height = 10, dpi = 300, units = "cm", device='png')
+
+
+
+f2b_narrow <- ggdraw() +
+  draw_plot(f2b, x = 0.08, width =0.84)
+
+plot_grid(
+  f2a,
+  NULL,
+  f2b_narrow,
+  ncol = 1,
+  rel_heights = c(1.2, 0.1, 1.2),
+  labels = c("a", "", "b")
+)
+
+ggsave("~/Dropbox/LightNiches/output/fig2accepted.png",
+       width = 16, height = 17, 
+       dpi = 300, units = "cm", device='png',bg = "white")
+
+=======
 ggsave("~/Dropbox/LightNiches/output/complexity_ordered.png",
        width = 5, height = 4, dpi = 150, units = "in", device='png')
+>>>>>>> 51882d098524d441ee5ac04e0e60cd66ae4dfce0
 
 
 gl
