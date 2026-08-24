@@ -5,11 +5,7 @@ source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/f
 library(ggplot2)
 library(dplyr)
 library(viridis) 
-<<<<<<< HEAD
 library(cowplot)
-
-=======
->>>>>>> 51882d098524d441ee5ac04e0e60cd66ae4dfce0
 
 ## figure 1 ####
 
@@ -78,7 +74,6 @@ dev.off()
 #### fig 2 #####
 
 df_int <- as.data.frame(df_int %>% group_by(site) %>% 
-<<<<<<< HEAD
                           mutate(Rm = mean(Rmean), Rr = rank(Rm), Rl_0.5 = log10(R_0.5)) %>% ungroup())
 
 gl <- ggplot(data = df_int, 
@@ -88,7 +83,6 @@ gl <- ggplot(data = df_int,
 
 gl <- ggplot(data = df_int, 
              aes(x = reorder(site, Rm), y = prop_integrals, fill = site)) +
->>>>>>> 51882d098524d441ee5ac04e0e60cd66ae4dfce0
   geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .9) +
   geom_point(aes(y = prop_integrals, color = site), 
              position = position_jitter(width = .15), size = 1, alpha = 0.7) +
@@ -102,7 +96,6 @@ gl <- ggplot(data = df_int,
   theme(panel.border = element_blank(),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank(),
-<<<<<<< HEAD
         text = element_text(size = 11),
         axis.title.x = element_text(size = 12),
         axis.title.y = element_text(size = 12),
@@ -138,21 +131,15 @@ ggplot(data = df_int,
         axis.title.y = element_text(size = 12),
         legend.title = element_text(size = 12),
         legend.text = element_text(size = 12))
-
-
-
-=======
         text = element_text(size = 15),
         axis.title.x = element_text(size = 16),
         axis.title.y = element_text(size = 16),
         legend.title = element_text(size = 16),
         legend.text = element_text(size = 16))
->>>>>>> 51882d098524d441ee5ac04e0e60cd66ae4dfce0
 gl
 ggsave("~/Dropbox/LightNiches/output/lightreadings_ordered.png",
        width = 5, height = 4, dpi = 150, units = "in", device='png')
 
-<<<<<<< HEAD
 #review 
 df_fig <- rbind(df_int, df_int)
 df_fig$site[1:903] <- "all"
@@ -248,11 +235,9 @@ ggsave("~/Dropbox/LightNiches/output/Fig2a_reviewed.png",
 
 ggplot(data = df_int) + 
   geom_point( aes(Rl_0.5,H_0.5, color = site), size = 2, alpha = 0.5) +
-=======
 
 ggplot(data = df_int) + 
   geom_point( aes(Rl_0.5,H_0.5, color = site), size = 3, alpha = 0.5) +
->>>>>>> 51882d098524d441ee5ac04e0e60cd66ae4dfce0
   ylab("height range, m (H)") +
   xlab(expression("log"[10]*"(surface rugosity), dimensionless (R_log)")) +
   #guides(fill = guide_legend(order = 0.1))+
@@ -270,7 +255,6 @@ ggplot(data = df_int) +
         legend.title = element_text(size = 16),
         legend.text = element_text(size = 16))
 
-<<<<<<< HEAD
 # review
 f2b <- ggplot(data = df_int) + 
   geom_point(aes(Rl_0.5, H_0.5,
@@ -320,7 +304,6 @@ ggsave("~/Dropbox/LightNiches/output/fig2accepted.png",
 =======
 ggsave("~/Dropbox/LightNiches/output/complexity_ordered.png",
        width = 5, height = 4, dpi = 150, units = "in", device='png')
->>>>>>> 51882d098524d441ee5ac04e0e60cd66ae4dfce0
 
 
 gl
