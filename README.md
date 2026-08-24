@@ -1,5 +1,6 @@
-# Light Niches in Lizard Island
-Data and code used for analysis of light niches in Lizard Island.
+# Coral reef habitat complexity decreases and diversifies local availability of light
+
+Data and code used for analysis of light niches in Lizard Island - Brambilla et al. 2026 (Limnology and Oceanography)
 
 ## File descriptions
 ### data
