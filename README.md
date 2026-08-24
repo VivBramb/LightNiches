@@ -1,6 +1,6 @@
 # Coral reef habitat complexity decreases and diversifies local availability of light
 
-Data and code used for analysis of light niches in Lizard Island - Brambilla et al. 2026 (Limnology and Oceanography)
+Data and used for analysis of light niches in Lizard Island - Brambilla et al. 2026 (Limnology and Oceanography). Figure also provided.
 
 ## File descriptions
 ### data
@@ -18,4 +18,8 @@ Empty as raw data (DEMs and 903 hobo readings) are too heavy. Output contains ag
 - **geometry.R**: get complexity variables (multiscale) 
 - **local_variables.R**: code for merging data and model fitting + create merged outputs
 - **figures.R**: code for figures not produced during model fitting
-  
+
+### figures
+- **Figure 1**: Study sites and sampling scheme example
+- **Figure 2**: Available light and complexity variables distributions
+- **Figure 3**: Proportion of available light distributions across the structural complexity space measured for patch scales of S=0.5m and models results across scales
